@@ -7,7 +7,7 @@ import { GoalApiEntity } from "@/app/api/goals/types";
 import { GoalType } from "@/app/server/goals/types";
 import AddGoalModal from "@/app/tome/components/AddGoalModal";
 import useGetGoals from "@/app/tome/hooks/goals/useGetGoals";
-import { parseDateFromApi, formatDate } from "@/app/tome/utils/dateUtils";
+import { formatDate } from "@/app/tome/utils/dateUtils";
 import dayjs from "dayjs";
 
 const { Title } = Typography;
@@ -15,6 +15,62 @@ const { Title } = Typography;
 enum ModalType {
   ADD = "ADD",
 }
+
+function getGoalTypeLabel(type: GoalType): string {
+  return type === GoalType.PAGES ? "Pages" : "Books";
+}
+
+function isGoalActive(startDate: Date, endDate: Date): boolean {
+  const now = dayjs();
+  const localStartDate = dayjs(startDate);
+  const localEndDate = dayjs(endDate);
+  return now.isAfter(localStartDate) && now.isBefore(localEndDate);
+}
+
+const columns: ColumnsType<GoalApiEntity> = [
+  {
+    title: "Goal Name",
+    dataIndex: "name",
+    key: "name",
+  },
+  {
+    title: "Type",
+    dataIndex: "goalType",
+    key: "goalType",
+    render: (type: GoalType) => getGoalTypeLabel(type),
+  },
+  {
+    title: "Target",
+    dataIndex: "targetValue",
+    key: "targetValue",
+    render: (value: number, record: GoalApiEntity) =>
+      `${value} ${getGoalTypeLabel(record.goalType)}`,
+  },
+  {
+    title: "Start Date",
+    dataIndex: "startDate",
+    key: "startDate",
+    render: (date: Date) => formatDate(date),
+  },
+  {
+    title: "End Date",
+    dataIndex: "endDate",
+    key: "endDate",
+    render: (date: Date) => formatDate(date),
+  },
+  {
+    title: "Status",
+    key: "status",
+    render: (_: unknown, record: GoalApiEntity) => {
+      const active = isGoalActive(record.startDate, record.endDate);
+      return (
+        <Tag color={active ? "success" : "default"}>
+          {active ? "Active" : "Inactive"}
+        </Tag>
+      );
+    },
+  },
+];
 
 export default function GoalList() {
   const [activeModal, setActiveModal] = useState<ModalType | null>(null);
@@ -55,67 +111,6 @@ export default function GoalList() {
       setActiveModal(null);
     }
   };
-
-  const getGoalTypeLabel = (type: GoalType) => {
-    return type === GoalType.PAGES ? "Pages" : "Books";
-  };
-
-  const isGoalActive = (startDate: Date, endDate: Date) => {
-    const now = dayjs();
-    const localStartDate = parseDateFromApi(startDate);
-    const localEndDate = parseDateFromApi(endDate);
-
-    if (!localStartDate || !localEndDate) {
-      return false;
-    }
-
-    return now.isAfter(dayjs(localStartDate)) && now.isBefore(dayjs(localEndDate));
-  };
-
-  const columns: ColumnsType<GoalApiEntity> = [
-    {
-      title: "Goal Name",
-      dataIndex: "name",
-      key: "name",
-    },
-    {
-      title: "Type",
-      dataIndex: "goalType",
-      key: "goalType",
-      render: (type: GoalType) => getGoalTypeLabel(type),
-    },
-    {
-      title: "Target",
-      dataIndex: "targetValue",
-      key: "targetValue",
-      render: (value: number, record: GoalApiEntity) =>
-        `${value} ${getGoalTypeLabel(record.goalType)}`,
-    },
-    {
-      title: "Start Date",
-      dataIndex: "startDate",
-      key: "startDate",
-      render: (date: Date) => formatDate(date),
-    },
-    {
-      title: "End Date",
-      dataIndex: "endDate",
-      key: "endDate",
-      render: (date: Date) => formatDate(date),
-    },
-    {
-      title: "Status",
-      key: "status",
-      render: (_: unknown, record: GoalApiEntity) => {
-        const active = isGoalActive(record.startDate, record.endDate);
-        return (
-          <Tag color={active ? "success" : "default"}>
-            {active ? "Active" : "Inactive"}
-          </Tag>
-        );
-      },
-    },
-  ];
 
   return (
     <div>

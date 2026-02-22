@@ -139,6 +139,45 @@ The backend follows a strict layered architecture to maintain separation of conc
   }
   function useBookData(options: UseBookDataOptions) {}
   ```
+- **Avoid Type Casting**: Never use `as` type assertions or casting. Instead, create explicit types or use type discrimination. Type casting hides potential type safety issues and makes code harder to refactor.
+  ```typescript
+  // ❌ Avoid type casting
+  const formValues = { name: "", goalType: undefined } as GoalFormValues;
+
+  // ✅ Prefer explicit interface with proper defaults
+  interface GoalFormValues {
+    name: string;
+    goalType: GoalType | undefined;
+    targetValue: string;
+    dateRange: [Dayjs, Dayjs] | undefined;
+  }
+
+  const defaultFormValues: GoalFormValues = {
+    name: "",
+    goalType: undefined,
+    targetValue: "",
+    dateRange: undefined,
+  };
+  ```
+- **Use Theme Colors**: Always pull colors from the theme via `theme.useToken()` instead of hardcoding color values. This ensures consistency across light/dark modes and respects user preferences.
+  ```typescript
+  // ❌ Avoid hardcoded colors
+  <div style={{ color: "#ff4d4f" }}>Error message</div>
+
+  // ✅ Prefer theme tokens
+  const { token } = theme.useToken();
+  <Alert type="error" description={message} style={{ color: token.colorError }} />
+  ```
+- **Use Ant Design Text Component**: Prefer using the `Text` component from antd for displaying text instead of generic `<div>` or `<span>` elements. This provides semantic meaning and ensures consistent styling.
+  ```typescript
+  // ❌ Avoid
+  <div style={{ color: "#ff4d4f", fontSize: 14 }}>Validation error</div>
+
+  // ✅ Prefer
+  import { Typography } from "antd";
+  const { Text } = Typography;
+  <Text type="danger">Validation error</Text>
+  ```
 
 ## Important Implementation Notes
 

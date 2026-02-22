@@ -1,6 +1,6 @@
 "use client";
 
-import { Input, Button, Select, DatePicker } from "antd";
+import { Input, Button, Select, DatePicker, Typography } from "antd";
 import { useForm } from "@tanstack/react-form";
 import { AddGoalApiInput } from "@/app/api/goals/types";
 import { GoalType } from "@/app/server/goals/types";
@@ -8,22 +8,32 @@ import useAddGoal from "@/app/tome/hooks/goals/useAddGoal";
 import type { Dayjs } from "dayjs";
 
 const { RangePicker } = DatePicker;
+const { Text } = Typography;
 
 interface GoalFormProps {
   onSuccess?: () => void;
   onError?: (error: string) => void;
 }
 
+interface GoalFormValues {
+  name: string;
+  goalType: GoalType | undefined;
+  targetValue: string;
+  dateRange: [Dayjs, Dayjs] | undefined;
+}
+
+const defaultFormValues: GoalFormValues = {
+  name: "",
+  goalType: undefined,
+  targetValue: "",
+  dateRange: undefined,
+};
+
 export default function GoalForm({ onSuccess, onError }: GoalFormProps) {
   const addGoalMutation = useAddGoal();
 
   const form = useForm({
-    defaultValues: {
-      name: "",
-      goalType: undefined as GoalType | undefined,
-      targetValue: "",
-      dateRange: undefined as [Dayjs, Dayjs] | undefined,
-    },
+    defaultValues: defaultFormValues,
     onSubmit: async ({ value }) => {
       if (!value.goalType || !value.dateRange) {
         onError?.("All fields are required");
@@ -87,9 +97,9 @@ export default function GoalForm({ onSuccess, onError }: GoalFormProps) {
               status={field.state.meta.errors.length > 0 ? "error" : undefined}
             />
             {field.state.meta.errors.length > 0 && (
-              <div style={{ color: "#ff4d4f", marginTop: 4, fontSize: 14 }}>
+              <Text type="danger" style={{ marginTop: 4 }}>
                 {field.state.meta.errors[0]}
-              </div>
+              </Text>
             )}
           </div>
         )}
@@ -124,9 +134,9 @@ export default function GoalForm({ onSuccess, onError }: GoalFormProps) {
               ]}
             />
             {field.state.meta.errors.length > 0 && (
-              <div style={{ color: "#ff4d4f", marginTop: 4, fontSize: 14 }}>
+              <Text type="danger" style={{ marginTop: 4 }}>
                 {field.state.meta.errors[0]}
-              </div>
+              </Text>
             )}
           </div>
         )}
@@ -166,9 +176,9 @@ export default function GoalForm({ onSuccess, onError }: GoalFormProps) {
               status={field.state.meta.errors.length > 0 ? "error" : undefined}
             />
             {field.state.meta.errors.length > 0 && (
-              <div style={{ color: "#ff4d4f", marginTop: 4, fontSize: 14 }}>
+              <Text type="danger" style={{ marginTop: 4 }}>
                 {field.state.meta.errors[0]}
-              </div>
+              </Text>
             )}
           </div>
         )}
@@ -205,9 +215,9 @@ export default function GoalForm({ onSuccess, onError }: GoalFormProps) {
               status={field.state.meta.errors.length > 0 ? "error" : undefined}
             />
             {field.state.meta.errors.length > 0 && (
-              <div style={{ color: "#ff4d4f", marginTop: 4, fontSize: 14 }}>
+              <Text type="danger" style={{ marginTop: 4 }}>
                 {field.state.meta.errors[0]}
-              </div>
+              </Text>
             )}
           </div>
         )}
