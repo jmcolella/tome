@@ -23,7 +23,11 @@ export default function RootLayout({
     <html lang="en">
       <body
         className={`${montserrat.variable} antialiased`}
-        style={{ margin: 0, height: "100vh" }}
+        style={{
+          margin: 0,
+          minHeight: "100vh",
+          background: "linear-gradient(135deg, #2E3A59 0%, #3A7BD5 50%, #2FBF71 100%)",
+        }}
       >
         <AntdRegistry>
           <ThemeProvider>

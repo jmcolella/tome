@@ -1,23 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { Table, Typography, Tag, Alert, Button, Spin } from "antd";
-import type { ColumnsType } from "antd/es/table";
-import { GoalApiEntity } from "@/app/api/goals/types";
-import { GoalType } from "@/app/server/goals/types";
+import { Typography, Alert, Button, Spin, theme } from "antd";
 import AddGoalModal from "@/app/tome/components/AddGoalModal";
+import GoalCard from "@/app/tome/components/GoalCard";
 import useGetGoals from "@/app/tome/hooks/goals/useGetGoals";
-import { formatDate } from "@/app/tome/utils/dateUtils";
 import dayjs from "dayjs";
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 
 enum ModalType {
   ADD = "ADD",
-}
-
-function getGoalTypeLabel(type: GoalType): string {
-  return type === GoalType.PAGES ? "Pages" : "Books";
 }
 
 function isGoalActive(startDate: Date, endDate: Date): boolean {
@@ -27,54 +20,10 @@ function isGoalActive(startDate: Date, endDate: Date): boolean {
   return now.isAfter(localStartDate) && now.isBefore(localEndDate);
 }
 
-const columns: ColumnsType<GoalApiEntity> = [
-  {
-    title: "Goal Name",
-    dataIndex: "name",
-    key: "name",
-  },
-  {
-    title: "Type",
-    dataIndex: "goalType",
-    key: "goalType",
-    render: (type: GoalType) => getGoalTypeLabel(type),
-  },
-  {
-    title: "Target",
-    dataIndex: "targetValue",
-    key: "targetValue",
-    render: (value: number, record: GoalApiEntity) =>
-      `${value} ${getGoalTypeLabel(record.goalType)}`,
-  },
-  {
-    title: "Start Date",
-    dataIndex: "startDate",
-    key: "startDate",
-    render: (date: Date) => formatDate(date),
-  },
-  {
-    title: "End Date",
-    dataIndex: "endDate",
-    key: "endDate",
-    render: (date: Date) => formatDate(date),
-  },
-  {
-    title: "Status",
-    key: "status",
-    render: (_: unknown, record: GoalApiEntity) => {
-      const active = isGoalActive(record.startDate, record.endDate);
-      return (
-        <Tag color={active ? "success" : "default"}>
-          {active ? "Active" : "Inactive"}
-        </Tag>
-      );
-    },
-  },
-];
-
 export default function GoalList() {
   const [activeModal, setActiveModal] = useState<ModalType | null>(null);
   const { goals, isLoading, error } = useGetGoals();
+  const { token } = theme.useToken();
 
   if (isLoading) {
     return (
@@ -112,29 +61,60 @@ export default function GoalList() {
     }
   };
 
+  const activeGoals = goals.filter((goal) =>
+    isGoalActive(goal.startDate, goal.endDate)
+  );
+  const displayedGoals = activeGoals.slice(0, 4);
+
   return (
-    <div>
+    <div
+      style={{
+        backgroundColor: "white",
+        border: `1px solid ${token.colorBorder}`,
+        borderRadius: token.borderRadius,
+        boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px 0 rgba(0, 0, 0, 0.02)",
+        padding: token.paddingLG,
+      }}
+    >
       <div
         style={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          marginBottom: 16,
+          marginBottom: token.marginMD,
         }}
       >
-        <Title level={2} style={{ margin: 0 }}>
-          Your Goals
+        <Title level={3} style={{ margin: 0, color: token.colorPrimary }}>
+          Goals
         </Title>
         <Button type="primary" onClick={() => openModal(ModalType.ADD)}>
           Add Goal
         </Button>
       </div>
-      <Table
-        columns={columns}
-        dataSource={goals}
-        rowKey="sid"
-        loading={isLoading}
-      />
+
+      {displayedGoals.length === 0 ? (
+        <Text type="secondary">No active goals yet</Text>
+      ) : (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: token.marginMD,
+            marginBottom: token.marginMD,
+          }}
+        >
+          {displayedGoals.map((goal) => (
+            <GoalCard key={goal.sid} goal={goal} />
+          ))}
+        </div>
+      )}
+
+      {goals.length > 4 && (
+        <Text type="secondary" style={{ fontSize: 12 }}>
+          <a href="#">See more goals</a>
+        </Text>
+      )}
+
       <AddGoalModal
         open={activeModal === ModalType.ADD}
         onClose={() => closeModal(ModalType.ADD)}
