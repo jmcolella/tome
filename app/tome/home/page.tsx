@@ -3,6 +3,7 @@
 import { Spin, theme, Typography } from "antd";
 import { redirect } from "next/navigation";
 import BookList from "@/app/tome/components/BookList";
+import GoalList from "@/app/tome/components/GoalList";
 import useGetUser from "@/app/tome/hooks/user/useGetUser";
 import { ROUTE_WELCOME } from "@/app/tome/routes";
 
@@ -38,6 +39,9 @@ export default function HomeClient() {
         </Typography.Title>
       </div>
       <BookList />
+      <div style={{ marginTop: token.marginXXL }}>
+        <GoalList />
+      </div>
     </div>
   );
 }

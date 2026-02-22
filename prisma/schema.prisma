@@ -110,3 +110,19 @@ model BookEventVersion {
   @@schema("public")
   @@map("book_event_versions")
 }
+
+model Goal {
+  sid               String    @id @db.VarChar
+  creation_order_id Int       @default(autoincrement())
+  datetime_created  DateTime  @default(now()) @db.Timestamptz(6)
+  datetime_updated  DateTime  @updatedAt @db.Timestamptz(6)
+  user_id           String    @db.Uuid
+  name              String    @db.VarChar
+  goal_type         String    @db.VarChar
+  target_value      Int
+  start_date        DateTime  @db.Date
+  end_date          DateTime  @db.Date
+
+  @@schema("public")
+  @@map("book_goals")
+}

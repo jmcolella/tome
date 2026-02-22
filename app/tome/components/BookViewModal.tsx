@@ -25,7 +25,7 @@ import {
 import { BookEventType } from "@/app/server/books/types";
 import useGetBookEvents from "@/app/tome/hooks/books/useGetBookEvents";
 import { useBookMetrics } from "@/app/tome/hooks/books/useBookMetrics";
-import dayjs from "dayjs";
+import { formatDate } from "@/app/tome/utils/dateUtils";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -98,7 +98,7 @@ export default function BookViewModal({
       ),
       dataIndex: "dateEffective",
       key: "dateEffective",
-      render: (date: Date) => dayjs(date).format("MMM DD, YYYY"),
+      render: (date: Date) => formatDate(date, "MMM DD, YYYY"),
     },
     {
       title: "Event Type",
@@ -216,8 +216,8 @@ export default function BookViewModal({
                       color: token.colorTextSecondary,
                     }}
                   >
-                    {dayjs(metrics.bestPeriod.start).format("MMM DD")} -{" "}
-                    {dayjs(metrics.bestPeriod.end).format("MMM DD")}
+                    {formatDate(metrics.bestPeriod.start, "MMM DD")} -{" "}
+                    {formatDate(metrics.bestPeriod.end, "MMM DD")}
                   </div>
                 )}
               </Col>
@@ -227,7 +227,7 @@ export default function BookViewModal({
           <Line
               data={{
                 labels: metrics.progressEvents.map((event) =>
-                  dayjs(event.dateEffective).format("MMM DD")
+                  formatDate(event.dateEffective, "MMM DD")
                 ),
                 datasets: [
                   {
