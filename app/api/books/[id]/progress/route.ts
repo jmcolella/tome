@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { updateBookProgressService } from "@/app/server/books/booksService";
 import { BookApiEntity } from "@/app/api/books/types";
+import { parseDateLocal } from "@/app/server/utils/dateUtils";
 
 export async function PATCH(
   request: Request,
@@ -53,8 +54,13 @@ export async function PATCH(
       );
     }
 
-    const dateEffectiveDate = new Date(dateEffective);
-    if (isNaN(dateEffectiveDate.getTime())) {
+    let dateEffectiveDate: Date;
+    try {
+      dateEffectiveDate = parseDateLocal(dateEffective);
+      if (isNaN(dateEffectiveDate.getTime())) {
+        throw new Error("Invalid date");
+      }
+    } catch {
       return new Response(
         JSON.stringify({ error: "Invalid dateEffective format", data: null }),
         { status: 400 }
