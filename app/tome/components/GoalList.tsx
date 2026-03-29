@@ -72,7 +72,7 @@ export default function GoalList() {
         backgroundColor: "white",
         border: `1px solid ${token.colorBorder}`,
         borderRadius: token.borderRadius,
-        boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px 0 rgba(0, 0, 0, 0.02)",
+        boxShadow: "0 10px 25px rgba(0, 0, 0, 0.15), 0 1px 2px 0 rgba(0, 0, 0, 0.03)",
         padding: token.paddingLG,
       }}
     >

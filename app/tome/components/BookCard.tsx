@@ -1,7 +1,11 @@
 "use client";
 
-import { Card, Progress, Typography, theme } from "antd";
+import { Card, Progress, Typography, theme, Divider } from "antd";
 import { BookApiEntity } from "@/app/api/books/types";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+
+dayjs.extend(relativeTime);
 
 const { Text } = Typography;
 
@@ -17,6 +21,8 @@ export default function BookCard({ book, onClick }: BookCardProps) {
     book.totalPages && book.currentPage !== null
       ? Math.round((book.currentPage / book.totalPages) * 100)
       : 0;
+
+  const createdAt = dayjs(book.datetimeCreated).fromNow();
 
   return (
     <Card
@@ -37,10 +43,15 @@ export default function BookCard({ book, onClick }: BookCardProps) {
         <Text strong ellipsis style={{ display: "block", marginBottom: token.marginSM, fontSize: 14 }}>
           {book.title}
         </Text>
-        <Text type="secondary" ellipsis style={{ display: "block", fontSize: 12 }}>
+        <Text type="secondary" ellipsis style={{ display: "block", fontSize: 12, marginBottom: token.marginSM }}>
           {book.authorName || "Unknown Author"}
         </Text>
+        <Text type="secondary" style={{ fontSize: 11 }}>
+          Added {createdAt}
+        </Text>
       </div>
+
+      <Divider style={{ margin: `${token.marginSM}px 0` }} />
 
       <div>
         <div
@@ -54,8 +65,8 @@ export default function BookCard({ book, onClick }: BookCardProps) {
           <Text type="secondary" style={{ fontSize: 12 }}>
             Progress
           </Text>
-          <Text type="secondary" style={{ fontSize: 12, fontWeight: 500 }}>
-            {progress}%
+          <Text strong style={{ fontSize: 12 }}>
+            {book.currentPage || 0} / {book.totalPages || "?"} pages
           </Text>
         </div>
         <Progress
@@ -63,6 +74,9 @@ export default function BookCard({ book, onClick }: BookCardProps) {
           size={["100%", 6]}
           showInfo={false}
         />
+        <Text type="secondary" style={{ fontSize: 11, display: "block", marginTop: 4 }}>
+          {progress}% complete
+        </Text>
       </div>
     </Card>
   );

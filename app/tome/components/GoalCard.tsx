@@ -72,16 +72,24 @@ export default function GoalCard({ goal }: GoalCardProps) {
         </Tag>
       </div>
 
-      <div style={{ marginBottom: token.marginMD }}>
-        <Text type="secondary" style={{ fontSize: 12 }}>
-          Progress
-        </Text>
-        <Progress percent={0} size={["100%", 8]} style={{ marginTop: 4 }} />
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-end",
+        }}
+      >
+        <div>
+          <Text type="secondary" style={{ fontSize: 12 }}>
+            Progress
+          </Text>
+          <Progress percent={0} size={["200px", 8]} style={{ marginTop: 4 }} />
+          <Text type="secondary" style={{ fontSize: 12 }}>
+            On track
+          </Text>
+        </div>
+        <Progress type="circle" percent={0} width={60} strokeColor={token.colorPrimary} />
       </div>
-
-      <Text type="secondary" style={{ fontSize: 12 }}>
-        On track
-      </Text>
     </Card>
   );
 }
