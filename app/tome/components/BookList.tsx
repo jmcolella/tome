@@ -1,15 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Table, Typography, Tag, Alert, Button } from "antd";
-import type { ColumnsType } from "antd/es/table";
+import { Typography, Alert, Button, Spin, theme } from "antd";
 import { BookApiEntity } from "@/app/api/books/types";
+import { BookStatus } from "@/app/server/books/types";
 import AddBookModal from "@/app/tome/components/AddBookModal";
-import BookActions from "@/app/tome/components/BookActions";
+import BookCard from "@/app/tome/components/BookCard";
 import BookViewModal from "@/app/tome/components/BookViewModal";
 import useGetBooks from "@/app/tome/hooks/books/useGetBooks";
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 
 enum ModalType {
   ADD = "ADD",
@@ -20,9 +20,21 @@ export default function BookList() {
   const [activeModal, setActiveModal] = useState<ModalType | null>(null);
   const [selectedBook, setSelectedBook] = useState<BookApiEntity | null>(null);
   const { books, isLoading, error } = useGetBooks();
+  const { token } = theme.useToken();
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: 200,
+        }}
+      >
+        <Spin size="large" />
+      </div>
+    );
   }
 
   if (error || !books) {
@@ -35,19 +47,6 @@ export default function BookList() {
       />
     );
   }
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "READ":
-        return "success";
-      case "READING":
-        return "processing";
-      case "SHELF":
-        return "default";
-      default:
-        return "default";
-    }
-  };
 
   const openModal = (modalName: ModalType) => {
     setActiveModal(modalName);
@@ -62,78 +61,69 @@ export default function BookList() {
     }
   };
 
-  const handleRowClick = (record: BookApiEntity) => {
-    setSelectedBook(record);
+  const handleBookClick = (book: BookApiEntity) => {
+    setSelectedBook(book);
     setActiveModal(ModalType.BOOK_VIEW);
   };
 
-  const columns: ColumnsType<BookApiEntity> = [
-    {
-      title: "Title",
-      dataIndex: "title",
-      key: "title",
-    },
-    {
-      title: "Author",
-      dataIndex: "authorName",
-      key: "authorName",
-      render: (authorName: string | null) => authorName || "N/A",
-    },
-    {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      render: (status: string | null) =>
-        status ? <Tag color={getStatusColor(status)}>{status}</Tag> : "N/A",
-    },
-    {
-      title: "Progress",
-      key: "progress",
-      render: (_: unknown, record: BookApiEntity) => {
-        if (!record.totalPages || record.currentPage === null) {
-          return "N/A";
-        }
-        const percentage = Math.round(
-          (record.currentPage / record.totalPages) * 100
-        );
-        return `${percentage}%`;
-      },
-    },
-    {
-      title: "Actions",
-      key: "actions",
-      render: (_: unknown, record: BookApiEntity) => (
-        <BookActions
-          book={record}
-          onViewDetails={() => handleRowClick(record)}
-        />
-      ),
-    },
-  ];
+  const readingBooks = books.filter(
+    (book) => book.status === BookStatus.READING
+  );
+  const displayedBooks = readingBooks.slice(0, 6);
 
   return (
-    <div>
+    <div
+      style={{
+        backgroundColor: "white",
+        border: `1px solid ${token.colorBorder}`,
+        borderRadius: token.borderRadius,
+        boxShadow: "0 10px 25px rgba(0, 0, 0, 0.15), 0 1px 2px 0 rgba(0, 0, 0, 0.03)",
+        padding: token.paddingLG,
+      }}
+    >
       <div
         style={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          marginBottom: 16,
+          marginBottom: token.marginMD,
         }}
       >
-        <Title level={2} style={{ margin: 0 }}>
-          Your Books
+        <Title level={3} style={{ margin: 0, color: token.colorPrimary }}>
+          Currently Reading
         </Title>
         <Button type="primary" onClick={() => openModal(ModalType.ADD)}>
           Add Book
         </Button>
       </div>
-      <Table
-        columns={columns}
-        dataSource={books}
-        rowKey="sid"
-        loading={isLoading}
-      />
+
+      {displayedBooks.length === 0 ? (
+        <Text type="secondary">No books in progress</Text>
+      ) : (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
+            gap: token.marginMD,
+            marginBottom: token.marginMD,
+          }}
+        >
+          {displayedBooks.map((book) => (
+            <BookCard
+              key={book.sid}
+              book={book}
+              onClick={() => handleBookClick(book)}
+            />
+          ))}
+        </div>
+      )}
+
+      {readingBooks.length > 6 && (
+        <Text type="secondary" style={{ fontSize: 12 }}>
+          <a href="#">See more books</a>
+        </Text>
+      )}
+
       <AddBookModal
         open={activeModal === ModalType.ADD}
         onClose={() => closeModal(ModalType.ADD)}

@@ -1,10 +1,12 @@
 "use client";
 
 import { theme, Layout, Typography } from "antd";
-import LogoutButton from "@/app/tome/components/LogoutButton";
+import UserAvatar from "@/app/tome/components/UserAvatar";
 import Link from "next/link";
 import useGetUser from "@/app/tome/hooks/user/useGetUser";
 import { ROUTE_HOME } from "@/app/tome/routes";
+
+const { Text } = Typography;
 
 export default function TombLayout({
   children,
@@ -15,7 +17,7 @@ export default function TombLayout({
   const { user, isLoading } = useGetUser();
 
   return (
-    <Layout style={{ height: "100%" }}>
+    <Layout style={{ height: "100vh", backgroundColor: "transparent", display: "flex", flexDirection: "column" }}>
       <Layout.Header
         style={{
           display: "flex",
@@ -30,11 +32,26 @@ export default function TombLayout({
             tome
           </Typography.Title>
         </Link>
-        {!isLoading && user && <LogoutButton />}
+        {!isLoading && user && <UserAvatar />}
       </Layout.Header>
-      <Layout.Content style={{ padding: token.paddingLG }}>
+      <Layout.Content style={{ padding: token.paddingLG, flex: 1 }}>
         {children}
       </Layout.Content>
+      <Layout.Footer
+        style={{
+          background: token.colorBgContainer,
+          borderTop: `1px solid ${token.colorBorder}`,
+          padding: token.paddingLG,
+          display: "flex",
+          justifyContent: "flex-end",
+          alignItems: "center",
+          height: 64,
+        }}
+      >
+        <Text type="secondary" style={{ fontSize: 12 }}>
+          Made by John Colella
+        </Text>
+      </Layout.Footer>
     </Layout>
   );
 }
