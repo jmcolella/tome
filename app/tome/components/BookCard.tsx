@@ -2,6 +2,7 @@
 
 import { Card, Progress, Typography, theme, Divider } from "antd";
 import { BookApiEntity } from "@/app/api/books/types";
+import BookActions from "@/app/tome/components/BookActions";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 
@@ -12,9 +13,10 @@ const { Text } = Typography;
 interface BookCardProps {
   book: BookApiEntity;
   onClick?: () => void;
+  showActions?: boolean;
 }
 
-export default function BookCard({ book, onClick }: BookCardProps) {
+export default function BookCard({ book, onClick, showActions }: BookCardProps) {
   const { token } = theme.useToken();
 
   const progress =
@@ -34,11 +36,25 @@ export default function BookCard({ book, onClick }: BookCardProps) {
         border: `1px solid ${token.colorBorder}`,
         borderRadius: token.borderRadius,
         backgroundColor: token.colorBgContainer,
+        position: "relative",
       }}
       hoverable={!!onClick}
       onClick={onClick}
       bodyStyle={{ padding: token.paddingMD, flex: 1, display: "flex", flexDirection: "column" }}
     >
+      {showActions && (
+        <div
+          style={{
+            position: "absolute",
+            top: token.paddingSM,
+            right: token.paddingSM,
+            zIndex: 1,
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <BookActions book={book} onViewDetails={onClick} />
+        </div>
+      )}
       <div style={{ flex: 1, marginBottom: token.marginMD }}>
         <Text strong ellipsis style={{ display: "block", marginBottom: token.marginSM, fontSize: 14 }}>
           {book.title}

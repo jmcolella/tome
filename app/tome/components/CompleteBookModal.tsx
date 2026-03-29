@@ -1,55 +1,46 @@
 "use client";
 
-import { Modal, Button, Space, DatePicker, Input, Alert, message } from "antd";
+import { Modal, Button, Space, DatePicker, Input, Alert } from "antd";
 import { useForm } from "@tanstack/react-form";
 import dayjs, { Dayjs } from "dayjs";
-import useUpdateProgress from "@/app/tome/hooks/books/useUpdateProgress";
+import useCompleteBook from "@/app/tome/hooks/books/useCompleteBook";
 import { BookApiEntity } from "@/app/api/books/types";
 
-interface UpdateProgressModalProps {
+interface CompleteBookModalProps {
   open: boolean;
   book: BookApiEntity;
   onClose: () => void;
   onSuccess: () => void;
 }
 
-export default function UpdateProgressModal({
+export default function CompleteBookModal({
   open,
   book,
   onClose,
   onSuccess,
-}: UpdateProgressModalProps) {
-  const updateProgress = useUpdateProgress();
+}: CompleteBookModalProps) {
+  const completeBook = useCompleteBook();
+
+  // Default finalPage: use totalPages if available, otherwise currentPage
+  const defaultFinalPage = book.totalPages?.toString() || book.currentPage?.toString() || "";
 
   const form = useForm({
     defaultValues: {
       dateEffective: dayjs().format("YYYY-MM-DD"),
-      currentPage: book.currentPage?.toString() || "0",
+      finalPage: defaultFinalPage,
     },
     onSubmit: async ({ value }) => {
       try {
-        // Check if this will trigger autocomplete
-        const willAutoComplete =
-          book.totalPages &&
-          Number(value.currentPage) === book.totalPages;
-
-        await updateProgress.mutateAsync({
+        await completeBook.mutateAsync({
           bookId: book.sid,
           dateEffective: value.dateEffective,
-          currentPage: Number(value.currentPage),
+          finalPage: value.finalPage ? Number(value.finalPage) : undefined,
         });
-
-        // Show notification if autocomplete happened
-        if (willAutoComplete) {
-          message.success("🎉 Book completed! Moved to Finished.");
-        }
-
         onSuccess();
         onClose();
         form.reset();
       } catch (error) {
-        // Error is handled by the mutation
-        console.error("Error updating book progress:", error);
+        console.error("Error completing book:", error);
       }
     },
   });
@@ -60,26 +51,22 @@ export default function UpdateProgressModal({
   };
 
   return (
-    <Modal
-      title="Update Progress"
-      open={open}
-      onCancel={handleCancel}
-      footer={null}
-    >
+    <Modal title="Mark Book as Complete" open={open} onCancel={handleCancel} footer={null}>
       <form
         onSubmit={(e) => {
           e.preventDefault();
           form.handleSubmit();
         }}
       >
-        {updateProgress.error && (
+        {completeBook.error && (
           <Alert
-            title={updateProgress.error.message}
+            message={completeBook.error.message}
             type="error"
             showIcon
             style={{ marginBottom: 16 }}
           />
         )}
+
         <form.Field
           name="dateEffective"
           validators={{
@@ -93,7 +80,7 @@ export default function UpdateProgressModal({
                 htmlFor={field.name}
                 style={{ display: "block", marginBottom: 8 }}
               >
-                Date
+                Completion Date
               </label>
               <DatePicker
                 id={field.name}
@@ -117,18 +104,18 @@ export default function UpdateProgressModal({
         </form.Field>
 
         <form.Field
-          name="currentPage"
+          name="finalPage"
           validators={{
             onChange: ({ value }) => {
               if (!value) {
-                return "Please enter current page";
+                return undefined; // Optional field
               }
               const numValue = Number(value);
               if (isNaN(numValue) || numValue < 0) {
-                return "Current page must be 0 or greater";
+                return "Final page must be 0 or greater";
               }
               if (book.totalPages && numValue > book.totalPages) {
-                return `Current page cannot exceed total pages (${book.totalPages})`;
+                return `Final page cannot exceed total pages (${book.totalPages})`;
               }
               return undefined;
             },
@@ -140,7 +127,7 @@ export default function UpdateProgressModal({
                 htmlFor={field.name}
                 style={{ display: "block", marginBottom: 8 }}
               >
-                Current Page
+                Final Page (optional)
               </label>
               <Input
                 id={field.name}
@@ -149,7 +136,7 @@ export default function UpdateProgressModal({
                 value={field.state.value}
                 onChange={(e) => field.handleChange(e.target.value)}
                 onBlur={field.handleBlur}
-                placeholder="Enter current page"
+                placeholder="Enter final page"
                 status={
                   field.state.meta.errors.length > 0 ? "error" : undefined
                 }
@@ -171,9 +158,9 @@ export default function UpdateProgressModal({
             <Button
               type="primary"
               htmlType="submit"
-              loading={form.state.isSubmitting || updateProgress.isPending}
+              loading={form.state.isSubmitting || completeBook.isPending}
             >
-              Update Progress
+              Mark as Complete
             </Button>
           </Space>
         </div>

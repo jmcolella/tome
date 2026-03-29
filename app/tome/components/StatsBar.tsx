@@ -73,7 +73,6 @@ export default function StatsBar() {
   }).length;
 
   const pagesThisWeek = books
-    .filter((book) => book.status === BookStatus.READING)
     .reduce((total, book) => {
       return total + (book.currentPage || 0);
     }, 0);

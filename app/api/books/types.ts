@@ -20,6 +20,12 @@ export interface AddBookApiInput {
   currentPage?: number;
 }
 
+export interface EditBookApiInput {
+  title?: string;
+  author?: string;
+  totalPages?: number;
+}
+
 export class BookApiEntity {
   public readonly sid: string;
   public readonly title: string;

@@ -8,7 +8,7 @@ export default function UserAvatar() {
   const { user } = useGetUser();
   const { token } = theme.useToken();
 
-  if (!user) {
+  if (!user || !user.email) {
     return null;
   }
 

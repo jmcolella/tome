@@ -1,6 +1,10 @@
-import { BookApiEntity } from "@/app/api/books/types";
+import { BookApiEntity, BookApiStatus } from "@/app/api/books/types";
 import { ApiResponse } from "@/app/api/types";
 import { useQuery } from "@tanstack/react-query";
+
+interface UseGetBooksOptions {
+  includeArchived?: boolean;
+}
 
 interface UseGetBooksResponse {
   books: BookApiEntity[] | null;
@@ -8,11 +12,20 @@ interface UseGetBooksResponse {
   error: Error | null;
 }
 
-function useGetBooks(): UseGetBooksResponse {
+function useGetBooks(options?: UseGetBooksOptions): UseGetBooksResponse {
   const { data, isLoading, error } = useQuery<ApiResponse<BookApiEntity[]>>({
-    queryKey: ["books"],
+    queryKey: ["books", options?.includeArchived ? "all" : "active"],
     queryFn: async () => {
-      const res = await fetch("/api/books");
+      let url = "/api/books";
+
+      if (options?.includeArchived) {
+        const filters = {
+          include_statuses: ["WANT_TO_READ", "READING", "READ", "ARCHIVED"],
+        };
+        url += `?filters=${encodeURIComponent(JSON.stringify(filters))}`;
+      }
+
+      const res = await fetch(url);
       return await res.json();
     },
   });

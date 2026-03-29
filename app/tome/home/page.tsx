@@ -1,12 +1,14 @@
 "use client";
 
-import { Spin, theme, Typography } from "antd";
+import { Spin, theme, Typography, Button } from "antd";
+import { BookOutlined } from "@ant-design/icons";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import BookList from "@/app/tome/components/BookList";
 import GoalList from "@/app/tome/components/GoalList";
 import StatsBar from "@/app/tome/components/StatsBar";
 import useGetUser from "@/app/tome/hooks/user/useGetUser";
-import { ROUTE_WELCOME } from "@/app/tome/routes";
+import { ROUTE_WELCOME, ROUTE_BOOKS } from "@/app/tome/routes";
 import dayjs from "dayjs";
 
 const { Title } = Typography;
@@ -37,7 +39,7 @@ export default function HomeClient() {
     );
   }
 
-  if (!user) {
+  if (!user || !user.email) {
     return redirect(ROUTE_WELCOME);
   }
 
@@ -60,6 +62,14 @@ export default function HomeClient() {
         <Title level={3} style={{ margin: 0, color: "rgba(255, 255, 255, 0.85)" }}>
           {greeting}, {userName}
         </Title>
+      </div>
+
+      <div style={{ width: "100%", maxWidth: 1200, paddingLeft: token.paddingLG, paddingRight: token.paddingLG, marginBottom: token.marginMD, display: "flex", justifyContent: "center" }}>
+        <Link href={ROUTE_BOOKS}>
+          <Button type="default" icon={<BookOutlined />} size="large">
+            View Library
+          </Button>
+        </Link>
       </div>
 
       <div style={{ width: "100%", maxWidth: 1200, paddingLeft: token.paddingLG, paddingRight: token.paddingLG, marginBottom: token.marginXL }}>

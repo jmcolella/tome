@@ -1,23 +1,28 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Dropdown, MenuProps } from "antd";
+import { Button, Dropdown, MenuProps, message } from "antd";
 import {
   DeleteOutlined,
   PlayCircleOutlined,
   BookOutlined,
   EyeOutlined,
   DownOutlined,
+  CheckCircleOutlined,
+  ReloadOutlined,
 } from "@ant-design/icons";
 import { BookApiEntity } from "@/app/api/books/types";
 import ArchiveBookModal from "@/app/tome/components/ArchiveBookModal";
 import StartBookModal from "@/app/tome/components/StartBookModal";
 import UpdateProgressModal from "@/app/tome/components/UpdateProgressModal";
+import CompleteBookModal from "@/app/tome/components/CompleteBookModal";
+import useUncompleteBook from "@/app/tome/hooks/books/useUncompleteBook";
 
 enum ModalType {
   ARCHIVE = "ARCHIVE",
   START = "START",
   PROGRESS = "PROGRESS",
+  COMPLETE = "COMPLETE",
 }
 
 interface BookActionsProps {
@@ -27,6 +32,7 @@ interface BookActionsProps {
 
 export default function BookActions({ book, onViewDetails }: BookActionsProps) {
   const [activeModal, setActiveModal] = useState<ModalType | null>(null);
+  const uncompleteBook = useUncompleteBook();
 
   const openModal = (modalName: ModalType) => {
     setActiveModal(modalName);
@@ -35,6 +41,15 @@ export default function BookActions({ book, onViewDetails }: BookActionsProps) {
   const closeModal = (modalName: ModalType) => {
     if (activeModal === modalName) {
       setActiveModal(null);
+    }
+  };
+
+  const handleUncomplete = async () => {
+    try {
+      await uncompleteBook.mutateAsync({ bookId: book.sid });
+      message.success("Book moved back to reading");
+    } catch {
+      message.error("Failed to resume reading");
     }
   };
 
@@ -62,6 +77,22 @@ export default function BookActions({ book, onViewDetails }: BookActionsProps) {
             label: "Update Progress",
             icon: <BookOutlined />,
             onClick: () => openModal(ModalType.PROGRESS),
+          },
+          {
+            key: "complete",
+            label: "Mark as Complete",
+            icon: <CheckCircleOutlined />,
+            onClick: () => openModal(ModalType.COMPLETE),
+          },
+        ]
+      : []),
+    ...(book.status === "READ"
+      ? [
+          {
+            key: "uncomplete",
+            label: "Resume Reading",
+            icon: <ReloadOutlined />,
+            onClick: handleUncomplete,
           },
         ]
       : []),
@@ -101,6 +132,12 @@ export default function BookActions({ book, onViewDetails }: BookActionsProps) {
         book={book}
         onClose={() => closeModal(ModalType.PROGRESS)}
         onSuccess={() => closeModal(ModalType.PROGRESS)}
+      />
+      <CompleteBookModal
+        open={activeModal === ModalType.COMPLETE}
+        book={book}
+        onClose={() => closeModal(ModalType.COMPLETE)}
+        onSuccess={() => closeModal(ModalType.COMPLETE)}
       />
     </>
   );

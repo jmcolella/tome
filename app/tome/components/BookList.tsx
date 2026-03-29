@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Typography, Alert, Button, Spin, theme } from "antd";
 import { BookApiEntity } from "@/app/api/books/types";
 import { BookStatus } from "@/app/server/books/types";
@@ -8,6 +9,7 @@ import AddBookModal from "@/app/tome/components/AddBookModal";
 import BookCard from "@/app/tome/components/BookCard";
 import BookViewModal from "@/app/tome/components/BookViewModal";
 import useGetBooks from "@/app/tome/hooks/books/useGetBooks";
+import { ROUTE_BOOKS } from "@/app/tome/routes";
 
 const { Title, Text } = Typography;
 
@@ -120,7 +122,7 @@ export default function BookList() {
 
       {readingBooks.length > 6 && (
         <Text type="secondary" style={{ fontSize: 12 }}>
-          <a href="#">See more books</a>
+          <Link href={ROUTE_BOOKS}>See more books</Link>
         </Text>
       )}
 

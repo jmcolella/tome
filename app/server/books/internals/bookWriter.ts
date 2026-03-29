@@ -97,6 +97,72 @@ export async function createBook(params: CreateBookParams): Promise<{
   }
 }
 
+export interface UpdateBookParams {
+  bookId: string;
+  userId: string;
+  title?: string;
+  authorName?: string;
+  totalPages?: number;
+}
+
+export async function updateBook(params: UpdateBookParams): Promise<{
+  book: Book | null;
+  error: string | null;
+}> {
+  try {
+    // First, verify the book exists and belongs to the user
+    const existingBook = await prisma.book.findFirst({
+      where: {
+        sid: params.bookId,
+        user_id: params.userId,
+      },
+    });
+
+    if (!existingBook) {
+      return {
+        book: null,
+        error: "Book not found or access denied",
+      };
+    }
+
+    // Build update data object with only provided fields
+    const updateData: {
+      title?: string;
+      author_name?: string;
+      total_pages?: number;
+    } = {};
+
+    if (params.title !== undefined) {
+      updateData.title = params.title;
+    }
+    if (params.authorName !== undefined) {
+      updateData.author_name = params.authorName;
+    }
+    if (params.totalPages !== undefined) {
+      updateData.total_pages = params.totalPages;
+    }
+
+    // Update book with provided fields
+    const book = await prisma.book.update({
+      where: {
+        sid: params.bookId,
+      },
+      data: updateData,
+    });
+
+    return {
+      book: new Book(book),
+      error: null,
+    };
+  } catch (error) {
+    console.error("Unexpected error updating book:", error);
+    return {
+      book: null,
+      error: "An unexpected error occurred while updating book",
+    };
+  }
+}
+
 export interface ArchiveBookParams {
   bookId: string;
   userId: string;
@@ -271,6 +337,209 @@ export async function startBook(params: StartBookParams): Promise<{
   }
 }
 
+export interface CompleteBookParams {
+  bookId: string;
+  userId: string;
+  dateEffective: Date;
+  finalPage?: number; // Optional final page override
+}
+
+export async function completeBook(params: CompleteBookParams): Promise<{
+  book: Book | null;
+  error: string | null;
+}> {
+  try {
+    // First, verify the book exists and belongs to the user
+    const existingBook = await prisma.book.findFirst({
+      where: {
+        sid: params.bookId,
+        user_id: params.userId,
+      },
+    });
+
+    if (!existingBook) {
+      return {
+        book: null,
+        error: "Book not found or access denied",
+      };
+    }
+
+    // Get the latest book_event_versions version for this book
+    const latestVersion = await prisma.bookEventVersion.findFirst({
+      where: {
+        book_sid: params.bookId,
+      },
+      orderBy: {
+        version: "desc",
+      },
+    });
+
+    if (!latestVersion) {
+      return {
+        book: null,
+        error: "No version found for book",
+      };
+    }
+
+    // Determine finalPage
+    let finalPage: number;
+    if (params.finalPage !== undefined) {
+      finalPage = params.finalPage;
+    } else if (existingBook.total_pages !== null) {
+      finalPage = existingBook.total_pages;
+    } else {
+      finalPage = existingBook.current_page;
+    }
+
+    // Validation: If totalPages exists and finalPage provided, ensure finalPage <= totalPages
+    if (
+      existingBook.total_pages !== null &&
+      finalPage > existingBook.total_pages
+    ) {
+      return {
+        book: null,
+        error: "Final page cannot exceed total pages",
+      };
+    }
+
+    const bookEventSid = uuidv4();
+
+    // Update book status and create book event in a transaction
+    const result = await prisma.$transaction(async (tx) => {
+      // Update book status to READ and current_page
+      const book = await tx.book.update({
+        where: {
+          sid: params.bookId,
+        },
+        data: {
+          status: BookStatus.READ,
+          current_page: finalPage,
+        },
+      });
+
+      // Create book event with COMPLETED type
+      await tx.bookEvent.create({
+        data: {
+          sid: bookEventSid,
+          book_sid: params.bookId,
+          event_type: BookEventType.COMPLETED,
+          date_effective: params.dateEffective,
+          page_number: finalPage,
+          version: latestVersion.version,
+        },
+      });
+
+      return book;
+    });
+
+    return {
+      book: new Book(result),
+      error: null,
+    };
+  } catch (error) {
+    console.error("Unexpected error completing book:", error);
+    return {
+      book: null,
+      error: "An unexpected error occurred while completing book",
+    };
+  }
+}
+
+export interface UncompleteBookParams {
+  bookId: string;
+  userId: string;
+}
+
+export async function uncompleteBook(params: UncompleteBookParams): Promise<{
+  book: Book | null;
+  error: string | null;
+}> {
+  try {
+    // First, verify the book exists and belongs to the user
+    const existingBook = await prisma.book.findFirst({
+      where: {
+        sid: params.bookId,
+        user_id: params.userId,
+      },
+    });
+
+    if (!existingBook) {
+      return {
+        book: null,
+        error: "Book not found or access denied",
+      };
+    }
+
+    // Verify book status is currently READ
+    if (existingBook.status !== BookStatus.READ) {
+      return {
+        book: null,
+        error: "Book must be in READ status to uncomplete",
+      };
+    }
+
+    // Get the latest book_event_versions version for this book
+    const latestVersion = await prisma.bookEventVersion.findFirst({
+      where: {
+        book_sid: params.bookId,
+      },
+      orderBy: {
+        version: "desc",
+      },
+    });
+
+    if (!latestVersion) {
+      return {
+        book: null,
+        error: "No version found for book",
+      };
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to start of day for date_effective
+
+    const bookEventSid = uuidv4();
+
+    // Update book status and create book event in a transaction
+    const result = await prisma.$transaction(async (tx) => {
+      // Update book status to READING (current_page stays the same)
+      const book = await tx.book.update({
+        where: {
+          sid: params.bookId,
+        },
+        data: {
+          status: BookStatus.READING,
+        },
+      });
+
+      // Create book event with STARTED type (indicating resuming reading)
+      await tx.bookEvent.create({
+        data: {
+          sid: bookEventSid,
+          book_sid: params.bookId,
+          event_type: BookEventType.STARTED,
+          date_effective: today,
+          page_number: existingBook.current_page,
+          version: latestVersion.version,
+        },
+      });
+
+      return book;
+    });
+
+    return {
+      book: new Book(result),
+      error: null,
+    };
+  } catch (error) {
+    console.error("Unexpected error uncompleting book:", error);
+    return {
+      book: null,
+      error: "An unexpected error occurred while uncompleting book",
+    };
+  }
+}
+
 export interface UpdateBookProgressParams {
   bookId: string;
   userId: string;
@@ -357,6 +626,21 @@ export async function updateBookProgress(
       return book;
     });
 
+    // Check for autocomplete condition
+    const shouldAutoComplete =
+      existingBook.totalPages !== null &&
+      params.currentPage === existingBook.totalPages;
+
+    if (shouldAutoComplete) {
+      // Auto-complete the book
+      return completeBook({
+        bookId: params.bookId,
+        userId: params.userId,
+        dateEffective: params.dateEffective,
+        finalPage: params.currentPage,
+      });
+    }
+
     return {
       book: new Book(result),
       error: null,
@@ -414,7 +698,7 @@ interface RebuildEventsParams {
   };
   existingEvents: BookEvent[];
   newVersion: number;
-  tx: any;
+  tx: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 async function rebuildEventsAfterBackdate(

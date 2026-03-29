@@ -7,15 +7,21 @@ import {
 } from "@/app/server/books/internals/bookReader";
 import {
   createBook,
+  updateBook,
   archiveBook,
   startBook,
   updateBookProgress,
   updateBookProgressBackdated,
+  completeBook,
+  uncompleteBook,
   CreateBookParams,
+  UpdateBookParams,
   ArchiveBookParams,
   StartBookParams,
   UpdateBookProgressParams,
   UpdateBookProgressBackdatedParams,
+  CompleteBookParams,
+  UncompleteBookParams,
 } from "@/app/server/books/internals/bookWriter";
 import { queryBookEventsAtLatestVersion } from "@/app/server/books/internals/bookEventReader";
 
@@ -32,6 +38,13 @@ export async function createBookService(params: CreateBookParams): Promise<{
   error: string | null;
 }> {
   return createBook(params);
+}
+
+export async function updateBookService(params: UpdateBookParams): Promise<{
+  book: Book | null;
+  error: string | null;
+}> {
+  return updateBook(params);
 }
 
 export async function archiveBookService(params: ArchiveBookParams): Promise<{
@@ -71,4 +84,20 @@ export async function updateBookProgressBackdatedService(
   error: string | null;
 }> {
   return updateBookProgressBackdated(params);
+}
+
+export async function completeBookService(params: CompleteBookParams): Promise<{
+  book: Book | null;
+  error: string | null;
+}> {
+  return completeBook(params);
+}
+
+export async function uncompleteBookService(
+  params: UncompleteBookParams
+): Promise<{
+  book: Book | null;
+  error: string | null;
+}> {
+  return uncompleteBook(params);
 }
